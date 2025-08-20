@@ -3,8 +3,19 @@ const Clients = require('../models/clients');
 // Listar todos los clientes
 exports.getAllClients = async (req, res) => {
   try {
-    const clients = await Clients.find();
-    res.json(clients);
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const allowedLimits = [10,20,30,40,50];
+    let limit = parseInt(req.query.limit) || 10;
+    if (!allowedLimits.includes(limit)) limit = 10;
+    const skip = (page - 1) * limit;
+
+    const filtros = {};
+    if (req.query.q) filtros.$text = { $search: req.query.q };
+
+    const total = await Clients.countDocuments(filtros);
+    const clients = await Clients.find(filtros).skip(skip).limit(limit).lean();
+    const totalPages = Math.ceil(total / limit);
+    res.json({ data: clients, meta: { total, page, limit, totalPages } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -1,8 +1,24 @@
+const Equipo = require('../models/equipo');
+const { storeFile } = require('../utils/storage');
+
 // Listar todos los equipos
 exports.getAllEquipos = async (req, res) => {
   try {
-    const equipos = await Equipo.find();
-    res.json(equipos);
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const allowedLimits = [10, 20, 30, 40, 50];
+    let limit = parseInt(req.query.limit) || 10;
+    if (!allowedLimits.includes(limit)) limit = 10;
+    const skip = (page - 1) * limit;
+
+    // Búsqueda opcional
+    const q = req.query.q ? { $text: { $search: req.query.q } } : {};
+    const filtros = { ...q, estado: 'activo' };
+
+    const total = await Equipo.countDocuments(filtros);
+    const equipos = await Equipo.find(filtros).skip(skip).limit(limit).lean();
+
+    const totalPages = Math.ceil(total / limit);
+    res.json({ data: equipos, meta: { total, page, limit, totalPages } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -51,8 +67,6 @@ exports.deleteEquipo = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 };
-const Equipo = require('../models/equipo');
-const { storeFile } = require('../utils/storage');
 
 exports.list = async (req, res) => {
   try {
