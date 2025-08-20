@@ -1,3 +1,23 @@
+// Endpoint seguro: devuelve info del usuario autenticado usando el token JWT
+exports.me = async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) return res.status(401).json({ message: 'Token requerido' });
+    const token = authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'Token inválido' });
+    const decoded = jwt.verify(token, JWT_SECRET);
+    // Buscar en ambas colecciones
+    let user = await User.findById(decoded.id).select('-password');
+    if (!user) {
+      user = await Administrador.findById(decoded.id).select('-contraseña');
+      if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
+      return res.json({ usuario: user.usuario, _id: user._id, rol: user.rol });
+    }
+    return res.json({ usuario: user.username, _id: user._id, rol: user.rol });
+  } catch (err) {
+    return res.status(401).json({ message: 'Token inválido o expirado' });
+  }
+};
 const User = require('../models/user');
 const Administrador = require('../models/administrador');
 const RefreshToken = require('../models/refreshToken');
