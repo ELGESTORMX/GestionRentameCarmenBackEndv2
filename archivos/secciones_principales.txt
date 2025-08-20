@@ -1,0 +1,22 @@
+Secciones Principales
+
+1. Renta de Maquinaria
+- Equipos para construcción, carpintería, jardinería y otros oficios.
+- Si el cliente no encuentra lo que busca, ofrecen ayuda personalizada para conseguirlo.
+- Imagen destacada: maquinaria en uso, con estética profesional.
+
+2. Venta de Maquinaria
+- Herramientas ligeras y maquinaria especializada.
+- Promesa de precios accesibles y variedad.
+- Imagen con maquinaria en exhibición.
+
+3. Reparación de Equipos
+- Taller especializado con técnicos actualizados.
+- Política clara: si no devuelven las piezas dañadas, el servicio es gratuito.
+- Opción de renta temporal mientras se repara el equipo.
+
+Notas adicionales:
+- Proceso RM: determinación de precio diario, asignación de costos, registro de rentas, gráfico obsolescencia uso/tiempo, cálculo de depreciación sobre equipos nuevos.
+- Es necesario generar scripts para anexar información de equipos existentes a la base de datos.
+- Inventario existente será estático sin precio dinámico (manejado a precios actuales de mercado).
+- Se proponen tablas para introducción de datos por parte de los franquiciatarios (exportables a CSV/Excel).
