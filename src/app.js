@@ -12,7 +12,7 @@ const legacyRoutes = require('./routes/legacy');
 
 const app = express();
 const PORT = process.env.PORT || 8085;
-const MONGO_URI = process.env.MONGO_URI;
+const MONGO_URI = process.env.LINK_DB;
 
 // Conexión Mongo
 if (MONGO_URI) {
