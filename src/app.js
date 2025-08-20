@@ -68,3 +68,8 @@ app.use('/v1', legacyRoutes);
 module.exports.start = function() {
   app.listen(PORT, () => console.log(`BackEnd escuchando en http://localhost:${PORT}`));
 };
+
+// Si se ejecuta directamente (node src/app.js), arranca el servidor automáticamente
+if (require.main === module) {
+  module.exports.start();
+}
