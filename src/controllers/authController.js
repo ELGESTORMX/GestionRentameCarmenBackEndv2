@@ -89,10 +89,25 @@ exports.login = async (req, res) => {
         }
       }
       if (valid) {
-        const token = jwt.sign({ id: admin._id, usuario: admin.usuario, rol: admin.rol }, JWT_SECRET, { expiresIn: '8h' });
-        const refresh = await createRefreshTokenForUser(admin);
-        console.log(`[auth.login] login exitoso para administrador: ${admin.usuario}, rol: ${admin.rol}`);
-        return res.json({ response: { token, usuario: admin.usuario, rol: admin.rol, refresh } });
+        const token = jwt.sign({ id: admin._id, usuario: admin.usuario }, JWT_SECRET, { expiresIn: '8h' });
+        console.log(`[auth.login] login exitoso para administrador: ${admin.usuario}`);
+        return res.json({ token, usuario: admin.usuario, _id: admin._id });
+// Endpoint para obtener info del usuario autenticado por token
+exports.me = async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) return res.status(401).json({ message: 'Token requerido' });
+    const token = authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'Token inválido' });
+    const decoded = jwt.verify(token, JWT_SECRET);
+    // Buscar en administradores
+    const admin = await require('../models/administrador').findById(decoded.id);
+    if (!admin) return res.status(404).json({ message: 'Usuario no encontrado' });
+    return res.json({ usuario: admin.usuario, _id: admin._id, rol: admin.rol });
+  } catch (err) {
+    return res.status(401).json({ message: 'Token inválido o expirado' });
+  }
+};
       }
     }
     // No encontrado o password incorrecto
