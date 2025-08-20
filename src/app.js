@@ -1,8 +1,11 @@
 require('dotenv').config();
-// ...middlewares...
-app.use(cors());
-app.use(bodyParser.json());
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const path = require('path');
+
+
 
 // Ruta general para /api
 app.get('/api', (req, res) => {
@@ -12,11 +15,6 @@ app.get('/api', (req, res) => {
     endpoints: ['/api/auth', '/api/admins', '/api/equipos', '/v1']
   });
 });
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
-const path = require('path');
 
 const authRoutes = require('./routes/auth');
 const equiposRoutes = require('./routes/equipos');
