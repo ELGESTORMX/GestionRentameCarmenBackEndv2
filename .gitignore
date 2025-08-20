@@ -1,2 +1,4 @@
+# Ignorar la carpeta de ejemplos antiguos
+ejemplos version 1/
 node_modules/
 .env
