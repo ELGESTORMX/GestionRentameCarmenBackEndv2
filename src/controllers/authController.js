@@ -52,20 +52,40 @@ exports.login = async (req, res) => {
   console.log('[auth.login] intento de login para usuario:', usuario);
   if (!usuario || !contraseña) return res.status(400).json({ message: 'usuario y contraseña requeridos' });
   try {
-    // Buscar exacto
+    // Buscar en users
     let user = await User.findOne({ usuario });
-    // Si no existe, intentar búsqueda case-insensitive (muchas apps guardan en distinto case)
+    let userType = 'user';
+    // Si no existe, buscar en administradores (v1)
     if (!user) {
-      user = await User.findOne({ usuario: { $regex: `^${usuario}$`, $options: 'i' } });
-      if (user) console.log('[auth.login] usuario encontrado por case-insensitive:', user.usuario);
+      try {
+        const Admins = mongoose.connection.modelNames().includes('Admins')
+          ? mongoose.model('Admins')
+          : require('../../ejemplos version 1/rentameBackDefinitivo/models/Admins.js').default;
+        user = await Admins.findOne({ usuario });
+        userType = 'admin';
+      } catch (e) {
+        // Si no existe el modelo, ignorar
+      }
     }
     if (!user) {
-      console.log('[auth.login] usuario no encontrado');
+      console.log('[auth.login] usuario no encontrado en users ni administradores');
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
-    // Compatibilidad con base de datos v1: comparar contraseña en texto plano
-    const valid = contraseña === user.contraseña;
-    console.log('[auth.login] comparación directa de contraseña (modo pruebas):', valid);
+    // Compatibilidad: aceptar contraseña en texto plano o bcrypt
+    let valid = false;
+    if (user.contraseña) {
+      // Si la contraseña almacenada parece un hash bcrypt
+      if (user.contraseña.startsWith('$2a$') || user.contraseña.startsWith('$2b$')) {
+        valid = require('bcryptjs').compareSync(contraseña, user.contraseña);
+        console.log('[auth.login] comparación bcrypt:', valid);
+      } else {
+        valid = contraseña === user.contraseña;
+        console.log('[auth.login] comparación directa:', valid);
+      }
+    } else if (user.contraseñaHash) {
+      valid = require('bcryptjs').compareSync(contraseña, user.contraseñaHash);
+      console.log('[auth.login] comparación bcrypt (contraseñaHash):', valid);
+    }
     if (!valid) return res.status(401).json({ message: 'Credenciales inválidas' });
     const token = jwt.sign({ id: user._id, usuario: user.usuario, rol: user.rol }, JWT_SECRET, { expiresIn: '8h' });
     const refresh = await createRefreshTokenForUser(user);
