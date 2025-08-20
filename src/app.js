@@ -1,3 +1,13 @@
+const clientsRoutes = require('./routes/clients');
+const usersRoutes = require('./routes/users');
+const categoriasRoutes = require('./routes/categorias');
+const notasRemisionRoutes = require('./routes/notasRemision');
+const rentasRoutes = require('./routes/rentas');
+app.use('/api/clients', clientsRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/categorias', categoriasRoutes);
+app.use('/api/notasRemision', notasRemisionRoutes);
+app.use('/api/rentas', rentasRoutes);
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
