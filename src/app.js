@@ -8,7 +8,7 @@ const path = require('path');
 const authRoutes = require('./routes/auth');
 const equiposRoutes = require('./routes/equipos');
 const legacyRoutes = require('./routes/legacy');
-const { supabaseClient } = require('./utils/supabase');
+// ...línea eliminada: supabaseClient ya no se usa en backend...
 
 const app = express();
 const PORT = process.env.PORT || 8085;
