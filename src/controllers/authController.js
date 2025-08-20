@@ -1,4 +1,5 @@
 const User = require('../models/user');
+const Administrador = require('../models/administrador');
 const RefreshToken = require('../models/refreshToken');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -46,51 +47,57 @@ exports.register = async (req, res) => {
   }
 };
 
-// Login actualizado para usar username y password, pero acepta ambos formatos para compatibilidad
+// Login adaptado: busca en ambas colecciones y acepta ambos formatos de campos
 exports.login = async (req, res) => {
   const { username, password } = req.body;
-  console.log('[auth.login] intento de login para username:', username);
+  console.log('[auth.login] intento de login para username/usuario:', username);
   if (!username || !password) return res.status(400).json({ message: 'username y password requeridos' });
   try {
-    // Buscar en users por username
+    // 1. Buscar en users (username/password)
     let user = await User.findOne({ username });
     let userType = 'user';
-    // Si no existe, buscar en administradores (v1) por username
-    if (!user) {
-      try {
-        const Admins = mongoose.connection.modelNames().includes('Admins')
-          ? mongoose.model('Admins')
-          : require('../../ejemplos version 1/rentameBackDefinitivo/models/Admins.js').default;
-        user = await Admins.findOne({ username });
-        userType = 'admin';
-      } catch (e) {
-        // Si no existe el modelo, ignorar
-      }
-    }
-    if (!user) {
-      console.log('[auth.login] username no encontrado en users ni administradores');
-      return res.status(401).json({ message: 'Credenciales inválidas' });
-    }
-    console.log(`[auth.login] username encontrado: ${user.username}, colección: ${userType}`);
-    // Compatibilidad: aceptar password en texto plano o bcrypt
     let valid = false;
-    if (user.password) {
-      if (user.password.startsWith('$2a$') || user.password.startsWith('$2b$')) {
-        valid = require('bcryptjs').compareSync(password, user.password);
-        console.log(`[auth.login] comparación bcrypt: password enviada='${password}', hash almacenado='${user.password}', resultado=${valid}`);
-      } else {
-        valid = password === user.password;
-        console.log(`[auth.login] comparación directa: enviada='${password}', almacenada='${user.password}', resultado=${valid}`);
+    if (user) {
+      if (user.password) {
+        if (user.password.startsWith('$2a$') || user.password.startsWith('$2b$')) {
+          valid = require('bcryptjs').compareSync(password, user.password);
+          console.log(`[auth.login] comparación bcrypt: password enviada='${password}', hash almacenado='${user.password}', resultado=${valid}`);
+        } else {
+          valid = password === user.password;
+          console.log(`[auth.login] comparación directa: enviada='${password}', almacenada='${user.password}', resultado=${valid}`);
+        }
+      }
+      if (valid) {
+        const token = jwt.sign({ id: user._id, username: user.username, rol: user.rol }, JWT_SECRET, { expiresIn: '8h' });
+        const refresh = await createRefreshTokenForUser(user);
+        console.log(`[auth.login] login exitoso para username: ${user.username}, rol: ${user.rol}`);
+        return res.json({ response: { token, username: user.username, rol: user.rol, refresh } });
       }
     }
-    if (!valid) {
-      console.log('[auth.login] password incorrecto para username:', user.username);
-      return res.status(401).json({ message: 'Credenciales inválidas' });
+    // 2. Buscar en administradores (usuario/contraseña)
+    let admin = await Administrador.findOne({ usuario: username });
+    userType = 'administrador';
+    valid = false;
+    if (admin) {
+      if (admin.contraseña) {
+        if (admin.contraseña.startsWith('$2a$') || admin.contraseña.startsWith('$2b$')) {
+          valid = require('bcryptjs').compareSync(password, admin.contraseña);
+          console.log(`[auth.login] comparación bcrypt: password enviada='${password}', hash almacenado='${admin.contraseña}', resultado=${valid}`);
+        } else {
+          valid = password === admin.contraseña;
+          console.log(`[auth.login] comparación directa: enviada='${password}', almacenada='${admin.contraseña}', resultado=${valid}`);
+        }
+      }
+      if (valid) {
+        const token = jwt.sign({ id: admin._id, usuario: admin.usuario, rol: admin.rol }, JWT_SECRET, { expiresIn: '8h' });
+        const refresh = await createRefreshTokenForUser(admin);
+        console.log(`[auth.login] login exitoso para administrador: ${admin.usuario}, rol: ${admin.rol}`);
+        return res.json({ response: { token, usuario: admin.usuario, rol: admin.rol, refresh } });
+      }
     }
-    const token = jwt.sign({ id: user._id, username: user.username, rol: user.rol }, JWT_SECRET, { expiresIn: '8h' });
-    const refresh = await createRefreshTokenForUser(user);
-    console.log(`[auth.login] login exitoso para username: ${user.username}, rol: ${user.rol}`);
-    return res.json({ response: { token, username: user.username, rol: user.rol, refresh } });
+    // No encontrado o password incorrecto
+    console.log('[auth.login] username/usuario no encontrado o password incorrecto en ninguna colección');
+    return res.status(401).json({ message: 'Credenciales inválidas' });
   } catch (err) {
     console.error('[auth.login] error:', err);
     return res.status(500).json({ message: err.message });
