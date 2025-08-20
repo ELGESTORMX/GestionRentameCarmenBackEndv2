@@ -1,3 +1,11 @@
+// Ruta general para /api
+app.get('/api', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'API GestionRentameCarmen Backend v2',
+    endpoints: ['/api/auth', '/api/admins', '/api/equipos', '/v1']
+  });
+});
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
