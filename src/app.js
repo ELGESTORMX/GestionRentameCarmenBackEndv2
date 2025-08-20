@@ -7,14 +7,7 @@ const path = require('path');
 
 
 
-// Ruta general para /api
-app.get('/api', (req, res) => {
-  res.json({
-    status: 'ok',
-    message: 'API GestionRentameCarmen Backend v2',
-    endpoints: ['/api/auth', '/api/admins', '/api/equipos', '/v1']
-  });
-});
+
 
 const authRoutes = require('./routes/auth');
 const equiposRoutes = require('./routes/equipos');
@@ -34,10 +27,20 @@ if (MONGO_URI) {
   console.warn('MONGO_URI no configurada. Usando datos mock en memoria.');
 }
 
+
 // Middlewares
 app.use(cors());
 app.use(bodyParser.json());
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
+// Ruta general para /api
+app.get('/api', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'API GestionRentameCarmen Backend v2',
+    endpoints: ['/api/auth', '/api/admins', '/api/equipos', '/v1']
+  });
+});
 
 // Rutas
 app.use('/api/auth', authRoutes);
