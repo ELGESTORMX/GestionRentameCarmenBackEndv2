@@ -1,3 +1,9 @@
+require('dotenv').config();
+// ...middlewares...
+app.use(cors());
+app.use(bodyParser.json());
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
 // Ruta general para /api
 app.get('/api', (req, res) => {
   res.json({
@@ -6,7 +12,6 @@ app.get('/api', (req, res) => {
     endpoints: ['/api/auth', '/api/admins', '/api/equipos', '/v1']
   });
 });
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
