@@ -1,3 +1,5 @@
+# Archivo actualizado para forzar un despliegue en Railway
+
 Servidor Express mínimo para desarrollo local.
 
 # Endpoints REST principales
