@@ -1,4 +1,4 @@
-const User = require('../models/user');
+const Usuario = require('../models/usuario');
 
 // Listar todos los usuarios
 exports.getAllUsers = async (req, res) => {
@@ -10,10 +10,10 @@ exports.getAllUsers = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const filtros = {};
-    if (req.query.q) filtros.username = { $regex: req.query.q, $options: 'i' }; // Búsqueda por username, no sensible a mayúsculas
+    if (req.query.q) filtros.usuario = { $regex: req.query.q, $options: 'i' }; // Búsqueda por usuario, no sensible a mayúsculas
 
-    const total = await User.countDocuments(filtros);
-    const users = await User.find(filtros).skip(skip).limit(limit).lean();
+    const total = await Usuario.countDocuments(filtros);
+    const users = await Usuario.find(filtros).skip(skip).limit(limit).lean();
     const totalPages = Math.ceil(total / limit);
     res.json({ data: users, meta: { total, page, limit, totalPages } });
   } catch (err) {
@@ -24,20 +24,20 @@ exports.getAllUsers = async (req, res) => {
 // Obtener un usuario por ID
 exports.getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: 'Usuario (username) no encontrado' });
+    const user = await Usuario.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Crear un usuario (requiere username y password)
+// Crear un usuario (requiere usuario y contraseña)
 exports.createUser = async (req, res) => {
   try {
-    const { username, password, rol } = req.body;
-    if (!username || !password) return res.status(400).json({ error: 'username y password requeridos' });
-    const user = new User({ username, password, rol });
+    const { usuario, contraseña, rol } = req.body;
+    if (!usuario || !contraseña) return res.status(400).json({ error: 'usuario y contraseña requeridos' });
+    const user = new Usuario({ usuario, contraseña, rol });
     await user.save();
     res.status(201).json(user);
   } catch (err) {
@@ -48,8 +48,8 @@ exports.createUser = async (req, res) => {
 // Actualizar un usuario (por ID)
 exports.updateUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!user) return res.status(404).json({ error: 'Usuario (username) no encontrado' });
+    const user = await Usuario.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
     res.json(user);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -59,8 +59,8 @@ exports.updateUser = async (req, res) => {
 // Eliminar un usuario (por ID)
 exports.deleteUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) return res.status(404).json({ error: 'Usuario (username) no encontrado' });
+    const user = await Usuario.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
     res.json({ message: 'Usuario eliminado correctamente' });
   } catch (err) {
     res.status(400).json({ error: err.message });
