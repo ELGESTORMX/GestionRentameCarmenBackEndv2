@@ -10,7 +10,7 @@ exports.getAllUsers = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const filtros = {};
-    if (req.query.q) filtros.$text = { $search: req.query.q };
+    if (req.query.q) filtros.username = { $regex: req.query.q, $options: 'i' }; // Búsqueda por username, no sensible a mayúsculas
 
     const total = await User.countDocuments(filtros);
     const users = await User.find(filtros).skip(skip).limit(limit).lean();
