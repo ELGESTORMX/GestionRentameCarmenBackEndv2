@@ -10,7 +10,7 @@ const RentasSchema = new mongoose.Schema({
   fecha_vencimiento: String,
   usuario_rentador: String,
   productos: Array,
-  total_renta: mongoose.Schema.Types.Mixed,
+  total_renta: Number, // Cambiado de Mixed a Number
   fotos_estado_inicial: [String],
   IVA: Boolean,
   creado_en: { type: Date, default: Date.now }

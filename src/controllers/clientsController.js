@@ -3,6 +3,7 @@ const Clients = require('../models/clients');
 // Listar todos los clientes
 exports.getAllClients = async (req, res) => {
   try {
+    console.log('Request recibido en /api/clients:', req.query);
     const page = Math.max(parseInt(req.query.page) || 1, 1);
     const allowedLimits = [10,20,30,40,50];
     let limit = parseInt(req.query.limit) || 10;
@@ -10,13 +11,17 @@ exports.getAllClients = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const filtros = {};
-    if (req.query.q) filtros.$text = { $search: req.query.q };
+    if (req.query.q) filtros.nombre = { $regex: req.query.q, $options: 'i' }; // Búsqueda por nombre, no sensible a mayúsculas
 
+    console.log('Filtros aplicados:', filtros);
     const total = await Clients.countDocuments(filtros);
+    console.log('Total de documentos encontrados:', total);
     const clients = await Clients.find(filtros).skip(skip).limit(limit).lean();
+    console.log('Clientes obtenidos:', clients);
     const totalPages = Math.ceil(total / limit);
     res.json({ data: clients, meta: { total, page, limit, totalPages } });
   } catch (err) {
+    console.error('Error en getAllClients:', err);
     res.status(500).json({ error: err.message });
   }
 };
