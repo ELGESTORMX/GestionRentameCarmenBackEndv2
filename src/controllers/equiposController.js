@@ -11,8 +11,10 @@ exports.getAllEquipos = async (req, res) => {
     const skip = (page - 1) * limit;
 
     // Búsqueda opcional
-    const q = req.query.q ? { $text: { $search: req.query.q } } : {};
-    const filtros = { ...q, estado: 'activo' };
+    const qObj = req.query.q ? { $text: { $search: req.query.q } } : null;
+    // Incluir documentos que tengan estado 'activo' o que no tengan el campo 'estado' (compatibilidad con datos existentes)
+    const estadoFilter = { $or: [ { estado: 'activo' }, { estado: { $exists: false } } ] };
+    const filtros = qObj ? { $and: [ qObj, estadoFilter ] } : estadoFilter;
 
     const total = await Equipo.countDocuments(filtros);
     const equipos = await Equipo.find(filtros).skip(skip).limit(limit).lean();
