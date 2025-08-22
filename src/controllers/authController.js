@@ -54,13 +54,15 @@ async function validateRefreshToken(tokenStr) {
 }
 
 exports.register = async (req, res) => {
-  const { usuario, contraseña, rol } = req.body;
+  // aceptar ambos formatos: usuario/contraseña o username/password
+  const usuario = req.body.usuario || req.body.username;
+  const contraseña = req.body.contraseña || req.body.password;
   if (!usuario || !contraseña) return res.status(400).json({ message: 'usuario y contraseña requeridos' });
   try {
     const existing = await Usuario.findOne({ usuario });
     if (existing) return res.status(400).json({ message: 'Usuario ya existe' });
     const hash = bcrypt.hashSync(contraseña, 8);
-    const u = new Usuario({ usuario, contraseña: hash, rol: rol || 2 });
+    const u = new Usuario({ usuario, contraseña: hash, rol: req.body.rol || 2 });
     await u.save();
     return res.json({ data: { usuario: u.usuario, rol: u.rol } });
   } catch (err) {
@@ -70,7 +72,9 @@ exports.register = async (req, res) => {
 
 // Login adaptado: busca en ambas colecciones y acepta ambos formatos de campos
 exports.login = async (req, res) => {
-  const { usuario, contraseña } = req.body;
+  // aceptar ambos formatos: usuario/contraseña o username/password
+  const usuario = req.body.usuario || req.body.username;
+  const contraseña = req.body.contraseña || req.body.password;
   console.log('[auth.login] intento de login para usuario:', usuario);
   if (!usuario || !contraseña) return res.status(400).json({ message: 'usuario y contraseña requeridos' });
   try {
