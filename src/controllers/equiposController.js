@@ -38,7 +38,37 @@ exports.getEquipoById = async (req, res) => {
 // Crear un equipo
 exports.createEquipo = async (req, res) => {
   try {
-    const equipo = new Equipo(req.body);
+    const payload = { ...req.body };
+    const equipo = new Equipo({
+      nombre: payload.nombre,
+      categoria: payload.categoria || '',
+      subcategoria: payload.subcategoria || '',
+      descripcion: payload.descripcion || '',
+      precio: payload.precio ? parseFloat(payload.precio) : undefined,
+      tipo: payload.tipo,
+      uso: payload.uso,
+      tamano: payload.tamano || '',
+      peso: payload.peso ? parseFloat(payload.peso) : undefined,
+      estado: payload.estado || 'activo',
+      estado_fisico: {
+        entrada: payload.estado_fisico_entrada === 'true' || payload.estado_fisico_entrada === true,
+        mantenimiento: payload.estado_fisico_mantenimiento === 'true' || payload.estado_fisico_mantenimiento === true,
+        salida_renta: payload.estado_fisico_salida_renta === 'true' || payload.estado_fisico_salida_renta === true,
+        reparacion: payload.estado_fisico_reparacion === 'true' || payload.estado_fisico_reparacion === true,
+        venta: payload.estado_fisico_venta === 'true' || payload.estado_fisico_venta === true,
+        desecho: payload.estado_fisico_desecho === 'true' || payload.estado_fisico_desecho === true
+      },
+      disponibilidad: {
+        stock: payload.disponibilidad_stock ? parseInt(payload.disponibilidad_stock, 10) : 0,
+        sku: payload.disponibilidad_sku || '',
+        qr: payload.disponibilidad_qr || ''
+      },
+      fecha_adquisicion: payload.fecha_adquisicion ? new Date(payload.fecha_adquisicion) : undefined,
+      vida_util_meses: payload.vida_util_meses ? parseInt(payload.vida_util_meses, 10) : undefined,
+      ubicacion: payload.ubicacion || '',
+      imagen: payload.imagen || '',
+      creado_en: new Date()
+    });
     await equipo.save();
     res.status(201).json(equipo);
   } catch (err) {
@@ -49,7 +79,37 @@ exports.createEquipo = async (req, res) => {
 // Actualizar un equipo
 exports.updateEquipo = async (req, res) => {
   try {
-    const equipo = await Equipo.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const payload = { ...req.body };
+    const update = {
+      ...(payload.nombre && { nombre: payload.nombre }),
+      ...(payload.categoria && { categoria: payload.categoria }),
+      ...(payload.subcategoria && { subcategoria: payload.subcategoria }),
+      ...(payload.descripcion && { descripcion: payload.descripcion }),
+      ...(payload.precio !== undefined && { precio: payload.precio ? parseFloat(payload.precio) : 0 }),
+      ...(payload.tipo && { tipo: payload.tipo }),
+      ...(payload.uso && { uso: payload.uso }),
+      ...(payload.tamano && { tamano: payload.tamano }),
+      ...(payload.peso !== undefined && { peso: payload.peso ? parseFloat(payload.peso) : 0 }),
+      ...(payload.estado && { estado: payload.estado }),
+      ...(payload.fecha_adquisicion && { fecha_adquisicion: new Date(payload.fecha_adquisicion) }),
+      ...(payload.vida_util_meses !== undefined && { vida_util_meses: payload.vida_util_meses ? parseInt(payload.vida_util_meses, 10) : 0 }),
+      ...(payload.ubicacion && { ubicacion: payload.ubicacion }),
+      ...(payload.imagen && { imagen: payload.imagen })
+    };
+
+    // estado_fisico y disponibilidad son objetos; manejarlos si vienen
+    if (payload.estado_fisico_entrada !== undefined) update['estado_fisico.entrada'] = payload.estado_fisico_entrada === 'true' || payload.estado_fisico_entrada === true;
+    if (payload.estado_fisico_mantenimiento !== undefined) update['estado_fisico.mantenimiento'] = payload.estado_fisico_mantenimiento === 'true' || payload.estado_fisico_mantenimiento === true;
+    if (payload.estado_fisico_salida_renta !== undefined) update['estado_fisico.salida_renta'] = payload.estado_fisico_salida_renta === 'true' || payload.estado_fisico_salida_renta === true;
+    if (payload.estado_fisico_reparacion !== undefined) update['estado_fisico.reparacion'] = payload.estado_fisico_reparacion === 'true' || payload.estado_fisico_reparacion === true;
+    if (payload.estado_fisico_venta !== undefined) update['estado_fisico.venta'] = payload.estado_fisico_venta === 'true' || payload.estado_fisico_venta === true;
+    if (payload.estado_fisico_desecho !== undefined) update['estado_fisico.desecho'] = payload.estado_fisico_desecho === 'true' || payload.estado_fisico_desecho === true;
+
+    if (payload.disponibilidad_stock !== undefined) update['disponibilidad.stock'] = payload.disponibilidad_stock ? parseInt(payload.disponibilidad_stock, 10) : 0;
+    if (payload.disponibilidad_sku !== undefined) update['disponibilidad.sku'] = payload.disponibilidad_sku;
+    if (payload.disponibilidad_qr !== undefined) update['disponibilidad.qr'] = payload.disponibilidad_qr;
+
+    const equipo = await Equipo.findByIdAndUpdate(req.params.id, update, { new: true });
     if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
     res.json(equipo);
   } catch (err) {
@@ -106,7 +166,24 @@ exports.createWithImage = async (req, res) => {
       subcategoria: payload.subcategoria || '',
       descripcion: payload.descripcion || '',
       precio: payload.precio ? Number(payload.precio) : (payload.precio ? parseFloat(payload.precio) : undefined),
+      tipo: payload.tipo || '',
+      uso: payload.uso || '',
+      tamano: payload.tamano || '',
+      peso: payload.peso ? parseFloat(payload.peso) : undefined,
       estado: payload.estado || 'activo',
+      estado_fisico: {
+        entrada: payload.estado_fisico_entrada === 'true' || payload.estado_fisico_entrada === true,
+        mantenimiento: payload.estado_fisico_mantenimiento === 'true' || payload.estado_fisico_mantenimiento === true,
+        salida_renta: payload.estado_fisico_salida_renta === 'true' || payload.estado_fisico_salida_renta === true,
+        reparacion: payload.estado_fisico_reparacion === 'true' || payload.estado_fisico_reparacion === true,
+        venta: payload.estado_fisico_venta === 'true' || payload.estado_fisico_venta === true,
+        desecho: payload.estado_fisico_desecho === 'true' || payload.estado_fisico_desecho === true
+      },
+      disponibilidad: {
+        stock: payload.disponibilidad_stock ? parseInt(payload.disponibilidad_stock, 10) : 0,
+        sku: payload.disponibilidad_sku || '',
+        qr: payload.disponibilidad_qr || ''
+      },
       fecha_adquisicion: payload.fecha_adquisicion ? new Date(payload.fecha_adquisicion) : undefined,
       vida_util_meses: payload.vida_util_meses ? parseInt(payload.vida_util_meses, 10) : undefined,
       ubicacion: payload.ubicacion || '',
