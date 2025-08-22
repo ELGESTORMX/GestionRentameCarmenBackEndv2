@@ -80,45 +80,48 @@ exports.login = async (req, res) => {
   try {
     // 1. Buscar en usuarios (usuario/contraseña)
     let user = await Usuario.findOne({ usuario });
-    let userType = 'usuario';
     let valid = false;
     if (user) {
       if (user.contraseña) {
         if (user.contraseña.startsWith('$2a$') || user.contraseña.startsWith('$2b$')) {
           valid = bcrypt.compareSync(contraseña, user.contraseña);
-          console.log(`[auth.login] comparación bcrypt: password enviada='${contraseña}', hash almacenado='${user.contraseña}', resultado=${valid}`);
+          console.log(`[auth.login] comparación bcrypt usuario: resultado=${valid}`);
         } else {
           valid = contraseña === user.contraseña;
-          console.log(`[auth.login] comparación directa: enviada='${contraseña}', almacenada='${user.contraseña}', resultado=${valid}`);
+          console.log(`[auth.login] comparación directa usuario: resultado=${valid}`);
         }
       }
       if (valid) {
         const token = jwt.sign({ id: user._id, usuario: user.usuario, rol: user.rol }, JWT_SECRET, { expiresIn: '8h' });
         const refresh = await createRefreshTokenForUser(user);
         console.log(`[auth.login] login exitoso para usuario: ${user.usuario}, rol: ${user.rol}`);
-        return res.json({ response: { token, usuario: user.usuario, rol: user.rol, refresh } });
+        return res.json({ token, usuario: user.usuario, rol: user.rol, refresh });
       }
     }
+
     // 2. Buscar en administradores (usuario/contraseña)
     let admin = await Administrador.findOne({ usuario });
-    userType = 'administrador';
     valid = false;
     if (admin) {
       if (admin.contraseña) {
         if (admin.contraseña.startsWith('$2a$') || admin.contraseña.startsWith('$2b$')) {
           valid = bcrypt.compareSync(contraseña, admin.contraseña);
-          console.log(`[auth.login] comparación bcrypt: password enviada='${contraseña}', hash almacenado='${admin.contraseña}', resultado=${valid}`);
+          console.log(`[auth.login] comparación bcrypt administrador: resultado=${valid}`);
         } else {
           valid = contraseña === admin.contraseña;
-          console.log(`[auth.login] comparación directa: enviada='${contraseña}', almacenada='${admin.contraseña}', resultado=${valid}`);
+          console.log(`[auth.login] comparación directa administrador: resultado=${valid}`);
         }
       }
       if (valid) {
-        const token = jwt.sign({ id: admin._id, usuario: admin.usuario }, JWT_SECRET, { expiresIn: '8h' });
+        const rol = admin.rol || 1;
+        const token = jwt.sign({ id: admin._id, usuario: admin.usuario, rol }, JWT_SECRET, { expiresIn: '8h' });
+        // crear refresh también para administradores para homogeneizar la respuesta
+        const refresh = await createRefreshTokenForUser(admin);
         console.log(`[auth.login] login exitoso para administrador: ${admin.usuario}`);
-        return res.json({ token, usuario: admin.usuario, _id: admin._id });
+        return res.json({ token, usuario: admin.usuario, rol, refresh });
       }
     }
+
     return res.status(401).json({ message: 'Credenciales inválidas' });
   } catch (err) {
     return res.status(500).json({ message: err.message });
